@@ -1,0 +1,35 @@
+{
+  "model_name": "random_forest",
+  "model_path": "D:\\Masters\\Research project\\Implementation\\Prototype UI\\cognitive-load-ui-prototype\\ml_training\\model_artifacts\\cognitive_load_model.joblib",
+  "dataset_path": "D:\\Masters\\Research project\\Implementation\\Prototype UI\\cognitive-load-ui-prototype\\datasets\\synthetic_interaction_dataset.csv",
+  "feature_columns": [
+    "clickRatePerMin",
+    "repeatedClickCount",
+    "scrollCount",
+    "scrollDirectionChanges",
+    "avgPointerSpeed",
+    "keyPressCount",
+    "navigationCount",
+    "avgHesitationMs",
+    "maxHesitationMs",
+    "durationSec"
+  ],
+  "label_column": "label",
+  "labels": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "random_state": 42,
+  "training_rows": 720,
+  "testing_rows": 180,
+  "total_rows": 900,
+  "best_model_metrics": {
+    "accuracy": 1.0,
+    "precision_macro": 1.0,
+    "recall_macro": 1.0,
+    "f1_macro": 1.0,
+    "cross_validation_f1_macro_mean": 1.0,
+    "cross_validation_f1_macro_std": 0.0
+  }
+}

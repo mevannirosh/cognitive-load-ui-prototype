@@ -1,0 +1,159 @@
+{
+  "best_model": "random_forest",
+  "best_model_metrics": {
+    "accuracy": 1.0,
+    "precision_macro": 1.0,
+    "recall_macro": 1.0,
+    "f1_macro": 1.0,
+    "cross_validation_f1_macro_mean": 1.0,
+    "cross_validation_f1_macro_std": 0.0
+  },
+  "all_model_results": {
+    "random_forest": {
+      "accuracy": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "classification_report": "              precision    recall  f1-score   support\n\n         low       1.00      1.00      1.00        60\n      medium       1.00      1.00      1.00        60\n        high       1.00      1.00      1.00        60\n\n    accuracy                           1.00       180\n   macro avg       1.00      1.00      1.00       180\nweighted avg       1.00      1.00      1.00       180\n",
+      "confusion_matrix": [
+        [
+          60,
+          0,
+          0
+        ],
+        [
+          0,
+          60,
+          0
+        ],
+        [
+          0,
+          0,
+          60
+        ]
+      ],
+      "cross_validation_f1_macro_mean": 1.0,
+      "cross_validation_f1_macro_std": 0.0
+    },
+    "gradient_boosting": {
+      "accuracy": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "classification_report": "              precision    recall  f1-score   support\n\n         low       1.00      1.00      1.00        60\n      medium       1.00      1.00      1.00        60\n        high       1.00      1.00      1.00        60\n\n    accuracy                           1.00       180\n   macro avg       1.00      1.00      1.00       180\nweighted avg       1.00      1.00      1.00       180\n",
+      "confusion_matrix": [
+        [
+          60,
+          0,
+          0
+        ],
+        [
+          0,
+          60,
+          0
+        ],
+        [
+          0,
+          0,
+          60
+        ]
+      ],
+      "cross_validation_f1_macro_mean": 1.0,
+      "cross_validation_f1_macro_std": 0.0
+    },
+    "svm_rbf": {
+      "accuracy": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "classification_report": "              precision    recall  f1-score   support\n\n         low       1.00      1.00      1.00        60\n      medium       1.00      1.00      1.00        60\n        high       1.00      1.00      1.00        60\n\n    accuracy                           1.00       180\n   macro avg       1.00      1.00      1.00       180\nweighted avg       1.00      1.00      1.00       180\n",
+      "confusion_matrix": [
+        [
+          60,
+          0,
+          0
+        ],
+        [
+          0,
+          60,
+          0
+        ],
+        [
+          0,
+          0,
+          60
+        ]
+      ],
+      "cross_validation_f1_macro_mean": 1.0,
+      "cross_validation_f1_macro_std": 0.0
+    },
+    "logistic_regression": {
+      "accuracy": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "classification_report": "              precision    recall  f1-score   support\n\n         low       1.00      1.00      1.00        60\n      medium       1.00      1.00      1.00        60\n        high       1.00      1.00      1.00        60\n\n    accuracy                           1.00       180\n   macro avg       1.00      1.00      1.00       180\nweighted avg       1.00      1.00      1.00       180\n",
+      "confusion_matrix": [
+        [
+          60,
+          0,
+          0
+        ],
+        [
+          0,
+          60,
+          0
+        ],
+        [
+          0,
+          0,
+          60
+        ]
+      ],
+      "cross_validation_f1_macro_mean": 1.0,
+      "cross_validation_f1_macro_std": 0.0
+    }
+  },
+  "feature_importance": [
+    {
+      "feature": "maxHesitationMs",
+      "importance": 0.278353586090409
+    },
+    {
+      "feature": "avgHesitationMs",
+      "importance": 0.2607412704515835
+    },
+    {
+      "feature": "durationSec",
+      "importance": 0.1814579532719983
+    },
+    {
+      "feature": "clickRatePerMin",
+      "importance": 0.1107196943215735
+    },
+    {
+      "feature": "scrollDirectionChanges",
+      "importance": 0.06845995092508489
+    },
+    {
+      "feature": "repeatedClickCount",
+      "importance": 0.04383705975661441
+    },
+    {
+      "feature": "scrollCount",
+      "importance": 0.0332193551630271
+    },
+    {
+      "feature": "navigationCount",
+      "importance": 0.021094570907849695
+    },
+    {
+      "feature": "keyPressCount",
+      "importance": 0.0019530312639641067
+    },
+    {
+      "feature": "avgPointerSpeed",
+      "importance": 0.00016352784789560855
+    }
+  ]
+}

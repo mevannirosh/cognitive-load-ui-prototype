@@ -1,0 +1,12 @@
+{
+    "clickRatePerMin": 22.4,
+    "repeatedClickCount": 3,
+    "scrollCount": 12,
+    "scrollDirectionChanges": 5,
+    "avgPointerSpeed": 410.7,
+    "keyPressCount": 42,
+    "navigationCount": 2,
+    "avgHesitationMs": 1700.5,
+    "maxHesitationMs": 4700.9,
+    "durationSec": 115.2
+}
