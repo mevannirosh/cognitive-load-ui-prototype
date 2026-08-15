@@ -9,10 +9,25 @@ import {
 } from "@mui/material";
 
 const menuItems = [
-  { key: "dashboard", label: "Dashboard" },
-  { key: "form", label: "Task Form" },
-  { key: "info", label: "Information Search" },
-  { key: "evaluation", label: "NASA-TLX Evaluation" },
+  {
+    key: "dashboard",
+    label: "Dashboard",
+  },
+
+  {
+    key: "form",
+    label: "Task Form",
+  },
+
+  {
+    key: "info",
+    label: "Information Search",
+  },
+
+  {
+    key: "research",
+    label: "Research Evaluation",
+  },
 ];
 
 export default function Sidebar({ activePage, setActivePage }) {

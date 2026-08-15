@@ -1,3 +1,23 @@
+# Participant research data
+research_data/
+
+# Local environment
+.env
+.env.backend
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Frontend
+node_modules/
+dist/
+
+# Models
+ml_training/model_artifacts/*.joblib
+
 # Logs
 logs
 *.log

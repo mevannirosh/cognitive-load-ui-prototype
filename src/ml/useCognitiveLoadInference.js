@@ -18,14 +18,15 @@ const VALID_LOADS = [
 ];
 
 
-function getMaximumProbability(probabilities = {}) {
-  const values = Object.values(probabilities);
+function maximumProbability(
+  probabilities = {}
+) {
+  const values =
+    Object.values(probabilities);
 
-  if (values.length === 0) {
-    return 0;
-  }
-
-  return Math.max(...values);
+  return values.length
+    ? Math.max(...values)
+    : 0;
 }
 
 
@@ -33,81 +34,158 @@ export default function useCognitiveLoadInference({
   sessionId,
   featureVector,
   enabled,
+
   predictionIntervalMs = 5000,
   minimumDurationSec = 15,
   confidenceThreshold = 0.6,
   requiredConsecutivePredictions = 2,
 }) {
-  const latestFeaturesRef = useRef(featureVector);
-  const enabledRef = useRef(enabled);
+  const latestFeaturesRef =
+    useRef(featureVector);
 
-  const inFlightRef = useRef(false);
-  const requestControllerRef = useRef(null);
+  const enabledRef =
+    useRef(enabled);
 
-  const stableLoadRef = useRef(null);
-  const candidateRef = useRef({
-    label: null,
-    count: 0,
-  });
+  const inFlightRef =
+    useRef(false);
 
-  const [apiHealth, setApiHealth] = useState({
-    checked: false,
-    healthy: false,
-    modelName: null,
-    modelVersion: null,
-  });
+  const requestControllerRef =
+    useRef(null);
 
-  const [status, setStatus] = useState(
-    enabled ? "warming-up" : "disabled"
-  );
+  const stableLoadRef =
+    useRef(null);
 
-  const [stableLoad, setStableLoad] = useState(null);
-  const [rawPrediction, setRawPrediction] = useState(null);
+  const candidateRef =
+    useRef({
+      label: null,
+      count: 0,
+    });
 
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [error, setError] = useState(null);
 
-  const [predictionCount, setPredictionCount] = useState(0);
-  const [acceptedPredictionCount, setAcceptedPredictionCount] =
-    useState(0);
+  const [apiHealth, setApiHealth] =
+    useState({
+      checked: false,
+      healthy: false,
+      modelName: null,
+      modelVersion: null,
+    });
+
+
+  const [status, setStatus] =
+    useState(
+      enabled
+        ? "warming-up"
+        : "disabled"
+    );
+
+
+  const [
+    stableLoad,
+    setStableLoad,
+  ] = useState(null);
+
+
+  const [
+    rawPrediction,
+    setRawPrediction,
+  ] = useState(null);
+
+
+  const [
+    predictionHistory,
+    setPredictionHistory,
+  ] = useState([]);
+
+
+  const [
+    lastUpdated,
+    setLastUpdated,
+  ] = useState(null);
+
+
+  const [
+    error,
+    setError,
+  ] = useState(null);
+
+
+  const [
+    predictionCount,
+    setPredictionCount,
+  ] = useState(0);
+
+
+  const [
+    acceptedPredictionCount,
+    setAcceptedPredictionCount,
+  ] = useState(0);
+
 
   useEffect(() => {
-    latestFeaturesRef.current = featureVector;
+    latestFeaturesRef.current =
+      featureVector;
   }, [featureVector]);
 
+
   useEffect(() => {
-    enabledRef.current = enabled;
+    enabledRef.current =
+      enabled;
 
     if (!enabled) {
       setStatus("disabled");
-    } else if (!stableLoadRef.current) {
+    } else if (
+      !stableLoadRef.current
+    ) {
       setStatus("warming-up");
     }
   }, [enabled]);
 
+
   useEffect(() => {
-    stableLoadRef.current = stableLoad;
+    stableLoadRef.current =
+      stableLoad;
   }, [stableLoad]);
 
+
+  const resetInferenceSession =
+    useCallback(() => {
+      requestControllerRef.current
+        ?.abort();
+
+      stableLoadRef.current = null;
+
+      candidateRef.current = {
+        label: null,
+        count: 0,
+      };
+
+      setStableLoad(null);
+      setRawPrediction(null);
+      setPredictionHistory([]);
+      setLastUpdated(null);
+      setError(null);
+
+      setPredictionCount(0);
+
+      setAcceptedPredictionCount(
+        0
+      );
+
+      setStatus(
+        enabledRef.current
+          ? "warming-up"
+          : "disabled"
+      );
+    }, []);
+
+
   useEffect(() => {
-    candidateRef.current = {
-      label: null,
-      count: 0,
-    };
+    resetInferenceSession();
+  }, [
+    sessionId,
+    resetInferenceSession,
+  ]);
 
-    stableLoadRef.current = null;
-
-    setStableLoad(null);
-    setRawPrediction(null);
-    setLastUpdated(null);
-    setError(null);
-    setPredictionCount(0);
-    setAcceptedPredictionCount(0);
-
-    if (enabledRef.current) {
-      setStatus("warming-up");
-    }
-  }, [sessionId]);
 
   useEffect(() => {
     if (!enabled) {
@@ -116,9 +194,11 @@ export default function useCognitiveLoadInference({
 
     let cancelled = false;
 
+
     async function checkHealth() {
       try {
-        const health = await checkMlApiHealth();
+        const health =
+          await checkMlApiHealth();
 
         if (cancelled) {
           return;
@@ -126,11 +206,17 @@ export default function useCognitiveLoadInference({
 
         setApiHealth({
           checked: true,
+
           healthy:
-            health.status === "healthy" &&
+            health.status ===
+              "healthy" &&
             health.modelLoaded,
-          modelName: health.modelName,
-          modelVersion: health.modelVersion,
+
+          modelName:
+            health.modelName,
+
+          modelVersion:
+            health.modelVersion,
         });
 
         setError(null);
@@ -146,252 +232,342 @@ export default function useCognitiveLoadInference({
           modelVersion: null,
         });
 
-        setError(healthError.message);
+        setError(
+          healthError.message
+        );
+
         setStatus("error");
       }
     }
 
+
     checkHealth();
+
 
     return () => {
       cancelled = true;
     };
   }, [enabled]);
 
-  const applyPredictionStability = useCallback(
-    (predictedLabel, confidence) => {
-      if (!VALID_LOADS.includes(predictedLabel)) {
-        return stableLoadRef.current;
-      }
 
-      if (confidence < confidenceThreshold) {
-        candidateRef.current = {
-          label: null,
-          count: 0,
-        };
-
-        return stableLoadRef.current;
-      }
-
-      setAcceptedPredictionCount(
-        (previous) => previous + 1
-      );
-
-      const currentStableLoad =
-        stableLoadRef.current;
-
-      if (!currentStableLoad) {
-        stableLoadRef.current = predictedLabel;
-        setStableLoad(predictedLabel);
-
-        candidateRef.current = {
-          label: null,
-          count: 0,
-        };
-
-        return predictedLabel;
-      }
-
-      if (predictedLabel === currentStableLoad) {
-        candidateRef.current = {
-          label: null,
-          count: 0,
-        };
-
-        return currentStableLoad;
-      }
-
-      if (
-        candidateRef.current.label ===
-        predictedLabel
-      ) {
-        candidateRef.current.count += 1;
-      } else {
-        candidateRef.current = {
-          label: predictedLabel,
-          count: 1,
-        };
-      }
-
-      if (
-        candidateRef.current.count >=
-        requiredConsecutivePredictions
-      ) {
-        stableLoadRef.current = predictedLabel;
-        setStableLoad(predictedLabel);
-
-        candidateRef.current = {
-          label: null,
-          count: 0,
-        };
-
-        return predictedLabel;
-      }
-
-      return currentStableLoad;
-    },
-    [
-      confidenceThreshold,
-      requiredConsecutivePredictions,
-    ]
-  );
-
-  const predictNow = useCallback(
-    async (force = false) => {
-      if (!enabledRef.current && !force) {
-        setStatus("disabled");
-        return null;
-      }
-
-      const features = latestFeaturesRef.current;
-
-      if (!features) {
-        setStatus("waiting-for-features");
-        return null;
-      }
-
-      const duration = Number(
-        features.durationSec || 0
-      );
-
-      if (
-        !force &&
-        duration < minimumDurationSec
-      ) {
-        setStatus("warming-up");
-        return null;
-      }
-
-      if (inFlightRef.current) {
-        return null;
-      }
-
-      inFlightRef.current = true;
-
-      requestControllerRef.current?.abort();
-
-      const controller = new AbortController();
-      requestControllerRef.current = controller;
-
-      setStatus("predicting");
-      setError(null);
-
-      try {
-        const result =
-          await predictCognitiveLoad({
-            sessionId,
-            features,
-            signal: controller.signal,
-          });
-
-        const confidence =
-          Number.isFinite(result.confidence)
-            ? result.confidence
-            : getMaximumProbability(
-                result.probabilities
-              );
-
-        const normalizedResult = {
-          ...result,
-          confidence,
-        };
-
-        setRawPrediction(normalizedResult);
-        setPredictionCount(
-          (previous) => previous + 1
-        );
-        setLastUpdated(new Date());
-        setApiHealth((previous) => ({
-          ...previous,
-          checked: true,
-          healthy: true,
-          modelName: result.modelName,
-          modelVersion: result.modelVersion,
-        }));
+  const applyPredictionStability =
+    useCallback(
+      (
+        predictedLabel,
+        confidence
+      ) => {
+        if (
+          !VALID_LOADS.includes(
+            predictedLabel
+          )
+        ) {
+          return stableLoadRef.current;
+        }
 
         if (
           confidence <
           confidenceThreshold
         ) {
-          setStatus("low-confidence");
+          candidateRef.current = {
+            label: null,
+            count: 0,
+          };
+
+          return stableLoadRef.current;
+        }
+
+        setAcceptedPredictionCount(
+          (previous) =>
+            previous + 1
+        );
+
+        const currentStableLoad =
+          stableLoadRef.current;
+
+        if (!currentStableLoad) {
+          stableLoadRef.current =
+            predictedLabel;
+
+          setStableLoad(
+            predictedLabel
+          );
+
+          candidateRef.current = {
+            label: null,
+            count: 0,
+          };
+
+          return predictedLabel;
+        }
+
+        if (
+          predictedLabel ===
+          currentStableLoad
+        ) {
+          candidateRef.current = {
+            label: null,
+            count: 0,
+          };
+
+          return currentStableLoad;
+        }
+
+        if (
+          candidateRef.current
+            .label ===
+          predictedLabel
+        ) {
+          candidateRef.current
+            .count += 1;
+        } else {
+          candidateRef.current = {
+            label:
+              predictedLabel,
+            count: 1,
+          };
+        }
+
+        if (
+          candidateRef.current
+            .count >=
+          requiredConsecutivePredictions
+        ) {
+          stableLoadRef.current =
+            predictedLabel;
+
+          setStableLoad(
+            predictedLabel
+          );
+
+          candidateRef.current = {
+            label: null,
+            count: 0,
+          };
+
+          return predictedLabel;
+        }
+
+        return currentStableLoad;
+      },
+      [
+        confidenceThreshold,
+        requiredConsecutivePredictions,
+      ]
+    );
+
+
+  const predictNow =
+    useCallback(
+      async (force = false) => {
+        if (
+          !enabledRef.current &&
+          !force
+        ) {
+          setStatus("disabled");
+          return null;
+        }
+
+        const features =
+          latestFeaturesRef.current;
+
+        if (!features) {
+          setStatus(
+            "waiting-for-features"
+          );
+
+          return null;
+        }
+
+        const duration =
+          Number(
+            features.durationSec || 0
+          );
+
+        if (
+          !force &&
+          duration <
+            minimumDurationSec
+        ) {
+          setStatus("warming-up");
+          return null;
+        }
+
+        if (inFlightRef.current) {
+          return null;
+        }
+
+        inFlightRef.current = true;
+
+        requestControllerRef.current
+          ?.abort();
+
+        const controller =
+          new AbortController();
+
+        requestControllerRef.current =
+          controller;
+
+        setStatus("predicting");
+        setError(null);
+
+        try {
+          const result =
+            await predictCognitiveLoad({
+              sessionId,
+              features,
+              signal:
+                controller.signal,
+            });
+
+          const confidence =
+            Number.isFinite(
+              result.confidence
+            )
+              ? result.confidence
+              : maximumProbability(
+                  result.probabilities
+                );
+
+          const timestamp =
+            new Date().toISOString();
+
+          const normalizedResult = {
+            ...result,
+            confidence,
+            clientTimestamp:
+              timestamp,
+          };
+
+          setRawPrediction(
+            normalizedResult
+          );
+
+          setPredictionHistory(
+            (previous) => [
+              ...previous,
+              normalizedResult,
+            ].slice(-500)
+          );
+
+          setPredictionCount(
+            (previous) =>
+              previous + 1
+          );
+
+          setLastUpdated(
+            new Date()
+          );
+
+          setApiHealth(
+            (previous) => ({
+              ...previous,
+
+              checked: true,
+              healthy: true,
+
+              modelName:
+                result.modelName,
+
+              modelVersion:
+                result.modelVersion,
+            })
+          );
 
           applyPredictionStability(
             result.predictedLoad,
             confidence
           );
 
+          if (
+            confidence <
+            confidenceThreshold
+          ) {
+            setStatus(
+              "low-confidence"
+            );
+          } else {
+            setStatus("ready");
+          }
+
           return normalizedResult;
-        }
-
-        applyPredictionStability(
-          result.predictedLoad,
-          confidence
-        );
-
-        setStatus("ready");
-
-        return normalizedResult;
-      } catch (predictionError) {
-        if (
-          predictionError.message
-            ?.toLowerCase()
-            .includes("cancelled")
+        } catch (
+          predictionError
         ) {
+          if (
+            predictionError.message
+              ?.toLowerCase()
+              .includes("cancelled")
+          ) {
+            return null;
+          }
+
+          setError(
+            predictionError.message
+          );
+
+          setStatus("error");
+
+          setApiHealth(
+            (previous) => ({
+              ...previous,
+              checked: true,
+              healthy: false,
+            })
+          );
+
           return null;
+        } finally {
+          inFlightRef.current =
+            false;
         }
+      },
+      [
+        applyPredictionStability,
+        confidenceThreshold,
+        minimumDurationSec,
+        sessionId,
+      ]
+    );
 
-        setError(predictionError.message);
-        setStatus("error");
-
-        setApiHealth((previous) => ({
-          ...previous,
-          checked: true,
-          healthy: false,
-        }));
-
-        return null;
-      } finally {
-        inFlightRef.current = false;
-      }
-    },
-    [
-      applyPredictionStability,
-      confidenceThreshold,
-      minimumDurationSec,
-      sessionId,
-    ]
-  );
 
   useEffect(() => {
     if (!enabled) {
       return undefined;
     }
 
-    const initialTimeoutId = window.setTimeout(
-      () => {
-        predictNow(false);
-      },
-      1000
-    );
+    const initialTimeoutId =
+      window.setTimeout(
+        () =>
+          predictNow(false),
+        1000
+      );
 
-    const intervalId = window.setInterval(
-      () => {
-        predictNow(false);
-      },
-      predictionIntervalMs
-    );
+    const intervalId =
+      window.setInterval(
+        () =>
+          predictNow(false),
+        predictionIntervalMs
+      );
+
 
     return () => {
-      window.clearTimeout(initialTimeoutId);
-      window.clearInterval(intervalId);
+      window.clearTimeout(
+        initialTimeoutId
+      );
 
-      requestControllerRef.current?.abort();
+      window.clearInterval(
+        intervalId
+      );
+
+      requestControllerRef.current
+        ?.abort();
     };
   }, [
     enabled,
     predictionIntervalMs,
     predictNow,
   ]);
+
 
   return {
     apiHealth,
@@ -400,21 +576,29 @@ export default function useCognitiveLoadInference({
     stableLoad,
     rawPrediction,
 
+    predictionHistory,
+
     confidence:
-      rawPrediction?.confidence || 0,
+      rawPrediction?.confidence ||
+      0,
 
     probabilities:
-      rawPrediction?.probabilities || {},
+      rawPrediction
+        ?.probabilities || {},
 
     adaptation:
-      rawPrediction?.adaptation || null,
+      rawPrediction
+        ?.adaptation || null,
 
     lastUpdated,
     error,
 
     predictionCount,
+
     acceptedPredictionCount,
 
     predictNow,
+
+    resetInferenceSession,
   };
 }

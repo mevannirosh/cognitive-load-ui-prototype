@@ -16,7 +16,7 @@ import {
 
 import { infoArticles } from "../data/demoData";
 
-export default function InformationSearch({ adaptiveMode, cognitiveLoad }) {
+export default function InformationSearch({ adaptiveMode, cognitiveLoad,researchMode = false, }) {
   const [query, setQuery] = useState("");
 
   const highLoad = adaptiveMode && cognitiveLoad === "high";
@@ -40,19 +40,19 @@ export default function InformationSearch({ adaptiveMode, cognitiveLoad }) {
         Demonstrates content summarisation and focus support based on cognitive load.
       </Typography>
 
-      {highLoad && (
+      {!researchMode && highLoad && (
         <Alert severity="info" sx={{ mb: 3 }}>
           High load adaptation applied: long descriptions are summarised and non-essential content is reduced.
         </Alert>
       )}
 
-      {mediumLoad && (
+      {!researchMode && mediumLoad && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           Medium load adaptation applied: categories and key content are highlighted.
         </Alert>
       )}
 
-      {lowLoad && (
+      {!researchMode && lowLoad && (
         <Alert severity="success" sx={{ mb: 3 }}>
           Low load adaptation applied: full content and detailed reading mode are enabled.
         </Alert>

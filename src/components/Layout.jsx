@@ -7,9 +7,15 @@ import {
 
 import AdaptationLog from "./AdaptationLog";
 import Header from "./Header";
+
 import InteractionMetricsPanel from "./InteractionMetricsPanel";
+
 import ModelInferencePanel from "./ModelInferencePanel";
+
+import ResearchTrialBanner from "./ResearchTrialBanner";
+
 import Sidebar from "./Sidebar";
+
 import StatusPanel from "./StatusPanel";
 
 
@@ -33,18 +39,39 @@ export default function Layout({
   logs,
   tracker,
   inference,
+
+  research,
 }) {
+  const participantMode =
+    [
+      "running",
+      "outcome",
+      "nasa",
+    ].includes(
+      research.phase
+    );
+
+
   return (
     <Box
       sx={{
         display: "flex",
-        minHeight: "100vh",
-        bgcolor: "#f4f7fb",
+
+        minHeight:
+          "100vh",
+
+        bgcolor:
+          "#f4f7fb",
       }}
     >
       <Sidebar
-        activePage={activePage}
-        setActivePage={setActivePage}
+        activePage={
+          activePage
+        }
+
+        setActivePage={
+          setActivePage
+        }
       />
 
       <Box
@@ -54,54 +81,134 @@ export default function Layout({
         }}
       >
         <Header
-          adaptiveMode={adaptiveMode}
+          adaptiveMode={
+            adaptiveMode
+          }
+
           setAdaptiveMode={
             setAdaptiveMode
           }
-          controlMode={controlMode}
-          setControlMode={setControlMode}
-          manualLoad={manualLoad}
-          setManualLoad={setManualLoad}
-          cognitiveLoad={cognitiveLoad}
-          inference={inference}
+
+          controlMode={
+            controlMode
+          }
+
+          setControlMode={
+            setControlMode
+          }
+
+          manualLoad={
+            manualLoad
+          }
+
+          setManualLoad={
+            setManualLoad
+          }
+
+          cognitiveLoad={
+            cognitiveLoad
+          }
+
+          inference={
+            inference
+          }
+
+          controlsLocked={
+            participantMode
+          }
         />
 
         <Box sx={{ p: 3 }}>
-          <StatusPanel
-            adaptiveMode={adaptiveMode}
-            cognitiveLoad={cognitiveLoad}
-            controlMode={controlMode}
-            inference={inference}
-          />
+          {research.phase ===
+            "running" &&
+            research.currentTrial && (
+              <ResearchTrialBanner
+                trial={
+                  research
+                    .currentTrial
+                }
 
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                lg: "minmax(0, 1fr) 370px",
-              },
-              gap: 3,
-              mt: 3,
-            }}
-          >
-            <Box>{children}</Box>
-
-            <Stack spacing={3}>
-              <ModelInferencePanel
-                inference={inference}
-                controlMode={controlMode}
+                onFinish={
+                  research
+                    .finishTrial
+                }
               />
+            )}
 
-              <AdaptationLog
-                logs={logs}
-              />
+          {!participantMode && (
+            <StatusPanel
+              adaptiveMode={
+                adaptiveMode
+              }
 
-              <InteractionMetricsPanel
-                tracker={tracker}
-              />
-            </Stack>
-          </Box>
+              cognitiveLoad={
+                cognitiveLoad
+              }
+
+              controlMode={
+                controlMode
+              }
+
+              inference={
+                inference
+              }
+            />
+          )}
+
+          {participantMode ? (
+            <Box sx={{ mt: 3 }}>
+              {children}
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display:
+                  "grid",
+
+                gridTemplateColumns:
+                  {
+                    xs:
+                      "1fr",
+
+                    lg:
+                      "minmax(0, 1fr) 370px",
+                  },
+
+                gap: 3,
+                mt: 3,
+              }}
+            >
+              <Box>
+                {children}
+              </Box>
+
+              <Stack
+                spacing={3}
+              >
+                <ModelInferencePanel
+                  inference={
+                    inference
+                  }
+
+                  controlMode={
+                    controlMode
+                  }
+                />
+
+                <AdaptationLog
+                  logs={
+                    logs
+                  }
+                />
+
+                <InteractionMetricsPanel
+                  tracker={
+                    tracker
+                  }
+                />
+              </Stack>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>

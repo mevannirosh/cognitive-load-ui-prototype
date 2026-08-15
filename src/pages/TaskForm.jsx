@@ -1,149 +1,456 @@
 import React, { useState } from "react";
+
 import {
   Alert,
   Box,
   Button,
   Card,
   CardContent,
-  Checkbox,
   Divider,
-  FormControlLabel,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 
-export default function TaskForm({ adaptiveMode, cognitiveLoad, addLog }) {
-  const [submitted, setSubmitted] = useState(false);
+import {
+  dashboardRows,
+  infoArticles,
+} from "../data/demoData";
 
-  const highLoad = adaptiveMode && cognitiveLoad === "high";
-  const mediumLoad = adaptiveMode && cognitiveLoad === "medium";
-  const lowLoad = adaptiveMode && cognitiveLoad === "low";
+
+const INITIAL_FORM = {
+  selectedItem: "",
+  priority: "",
+  reason: "",
+  supportingInformation: "",
+  additionalNotes: "",
+};
+
+
+export default function TaskForm({
+  adaptiveMode,
+  cognitiveLoad,
+  addLog,
+  researchMode = false,
+  recordInteractionEvent,
+}) {
+  const [formData, setFormData] =
+    useState(INITIAL_FORM);
+
+  const [submitted, setSubmitted] =
+    useState(false);
+
+  const [validationError, setValidationError] =
+    useState("");
+
+
+  const highLoad =
+    adaptiveMode &&
+    cognitiveLoad === "high";
+
+  const mediumLoad =
+    adaptiveMode &&
+    cognitiveLoad === "medium";
+
+  const lowLoad =
+    adaptiveMode &&
+    cognitiveLoad === "low";
+
+
+  const handleChange = (field) => (event) => {
+    setFormData((previous) => ({
+      ...previous,
+      [field]: event.target.value,
+    }));
+
+    setSubmitted(false);
+    setValidationError("");
+  };
+
+
+  const validateForm = () => {
+    if (!formData.selectedItem) {
+      return "Please select an item.";
+    }
+
+    if (!formData.priority) {
+      return "Please select a priority.";
+    }
+
+    if (!formData.reason.trim()) {
+      return "Please provide a reason for your selection.";
+    }
+
+    return "";
+  };
+
 
   const handleSubmit = () => {
+    const error = validateForm();
+
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+
+    setValidationError("");
     setSubmitted(true);
-    addLog("Task form submitted.");
+
+    addLog?.(
+      `Review submitted for ${formData.selectedItem}.`
+    );
+
+    recordInteractionEvent?.(
+      "task_form_submitted",
+      {
+        selectedItem:
+          formData.selectedItem,
+
+        priority:
+          formData.priority,
+
+        supportingInformation:
+          formData.supportingInformation,
+
+        reason:
+          formData.reason.trim(),
+
+        additionalNotes:
+          formData.additionalNotes.trim(),
+      }
+    );
   };
+
+
+  const handleClear = () => {
+    setFormData(INITIAL_FORM);
+    setSubmitted(false);
+    setValidationError("");
+  };
+
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 1 }}>
+      <Typography
+        variant="h5"
+        sx={{ mb: 1 }}
+      >
         Task Form
       </Typography>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Demonstrates form simplification and guidance based on cognitive load.
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 3 }}
+      >
+        Record the item you selected and
+        explain the reason for your decision.
       </Typography>
 
-      {highLoad && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          High load adaptation applied: optional fields are hidden and step-by-step hints are enabled.
+
+      {!researchMode && highLoad && (
+        <Alert
+          severity="info"
+          sx={{ mb: 3 }}
+        >
+          The interface has been simplified
+          and non-essential options have been reduced.
         </Alert>
       )}
 
-      {mediumLoad && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          Medium load adaptation applied: important fields are highlighted with helpful guidance.
+
+      {!researchMode && mediumLoad && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+        >
+          Important fields are highlighted
+          and additional guidance is available.
         </Alert>
       )}
 
-      {lowLoad && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Low load adaptation applied: full form with advanced fields is available.
+
+      {!researchMode && lowLoad && (
+        <Alert
+          severity="success"
+          sx={{ mb: 3 }}
+        >
+          Full form functionality is available.
         </Alert>
       )}
 
-      <Card elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
+
+      <Card
+        elevation={0}
+        sx={{
+          border:
+            "1px solid #e5e7eb",
+        }}
+      >
         <CardContent>
-          <Typography variant="h6">System Review Form</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Complete this form as part of the evaluation task.
+          <Typography variant="h6">
+            Review Submission
           </Typography>
 
-          <Divider sx={{ mb: 3 }} />
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 0.5 }}
+          >
+            Fields marked with * are required.
+          </Typography>
 
-          {highLoad && (
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Step 1: Fill only the required fields first. Optional details are temporarily hidden.
+          <Divider sx={{ my: 3 }} />
+
+
+          {validationError && (
+            <Alert
+              severity="error"
+              sx={{ mb: 3 }}
+            >
+              {validationError}
             </Alert>
           )}
+
+
+          {highLoad && adaptiveMode && (
+            <Typography
+              variant="body2"
+              sx={{ mb: 2 }}
+            >
+              Complete the required fields first.
+            </Typography>
+          )}
+
 
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: highLoad ? "1fr" : "1fr 1fr" },
+
+              gridTemplateColumns: {
+                xs: "1fr",
+                md: highLoad
+                  ? "1fr"
+                  : "1fr 1fr",
+              },
+
               gap: 2,
             }}
           >
             <TextField
               required
-              label="Task Title"
-              helperText={highLoad || mediumLoad ? "Enter a short and clear title." : ""}
-              className={mediumLoad ? "highlight-pulse" : ""}
-            />
+              select
+
+              label="Selected Item"
+
+              value={
+                formData.selectedItem
+              }
+
+              onChange={
+                handleChange(
+                  "selectedItem"
+                )
+              }
+
+              helperText={
+                mediumLoad
+                  ? "Choose the item you decided should be reviewed."
+                  : ""
+              }
+            >
+              {dashboardRows
+                .filter(
+                  (item) =>
+                    item.status !==
+                    "Completed"
+                )
+                .map((item) => (
+                  <MenuItem
+                    key={item.id}
+                    value={item.module}
+                  >
+                    {item.module}
+                  </MenuItem>
+                ))}
+            </TextField>
+
 
             <TextField
               required
               select
+
               label="Priority"
-              defaultValue=""
-              helperText={mediumLoad ? "Choose the importance level." : ""}
-              className={mediumLoad ? "highlight-pulse" : ""}
+
+              value={
+                formData.priority
+              }
+
+              onChange={
+                handleChange(
+                  "priority"
+                )
+              }
+
+              helperText={
+                mediumLoad
+                  ? "Select the priority shown for the item."
+                  : ""
+              }
             >
-              <MenuItem value="high">High</MenuItem>
-              <MenuItem value="medium">Medium</MenuItem>
-              <MenuItem value="low">Low</MenuItem>
+              <MenuItem value="High">
+                High
+              </MenuItem>
+
+              <MenuItem value="Medium">
+                Medium
+              </MenuItem>
+
+              <MenuItem value="Low">
+                Low
+              </MenuItem>
             </TextField>
+
 
             <TextField
               required
-              label="Description"
               multiline
-              rows={highLoad ? 3 : 5}
+
+              rows={
+                highLoad ? 3 : 4
+              }
+
+              label="Reason for Selection"
+
+              value={
+                formData.reason
+              }
+
+              onChange={
+                handleChange(
+                  "reason"
+                )
+              }
+
               helperText={
                 highLoad
-                  ? "Briefly describe the main issue only."
-                  : "Provide a complete description of the task."
+                  ? "Briefly explain why this item should be handled first."
+                  : "Explain why you selected this item."
               }
-              sx={{ gridColumn: { xs: "1", md: "1 / -1" } }}
+
+              sx={{
+                gridColumn: {
+                  xs: "1",
+                  md: "1 / -1",
+                },
+              }}
             />
 
+
+            <TextField
+              select
+
+              label="Supporting Information"
+
+              value={
+                formData.supportingInformation
+              }
+
+              onChange={
+                handleChange(
+                  "supportingInformation"
+                )
+              }
+
+              helperText="Select the guide or policy you used, when relevant."
+            >
+              <MenuItem value="">
+                None
+              </MenuItem>
+
+              {infoArticles.map(
+                (article) => (
+                  <MenuItem
+                    key={
+                      article.title
+                    }
+                    value={
+                      article.title
+                    }
+                  >
+                    {article.title}
+                  </MenuItem>
+                )
+              )}
+            </TextField>
+
+
             {!highLoad && (
-              <>
-                <TextField label="Reference Code" />
-                <TextField label="Assigned Team" />
-                <TextField label="Additional Notes" multiline rows={3} />
-                <TextField label="Follow-up Action" multiline rows={3} />
-              </>
-            )}
+              <TextField
+                multiline
 
-            {lowLoad && (
-              <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" } }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Advanced Options
-                </Typography>
+                rows={3}
 
-                <Stack direction="row" spacing={2} flexWrap="wrap">
-                  <FormControlLabel control={<Checkbox />} label="Send notification" />
-                  <FormControlLabel control={<Checkbox />} label="Attach report" />
-                  <FormControlLabel control={<Checkbox />} label="Schedule follow-up" />
-                </Stack>
-              </Box>
+                label="Additional Notes"
+
+                value={
+                  formData.additionalNotes
+                }
+
+                onChange={
+                  handleChange(
+                    "additionalNotes"
+                  )
+                }
+
+                helperText="Optional"
+              />
             )}
           </Box>
 
-          <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
-            <Button variant="contained" onClick={handleSubmit}>
+
+          <Stack
+            direction={{
+              xs: "column",
+              sm: "row",
+            }}
+
+            spacing={2}
+
+            sx={{ mt: 3 }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={
+                handleSubmit
+              }
+            >
               Submit Review
             </Button>
 
-            {!highLoad && <Button variant="outlined">Save Draft</Button>}
+            {!highLoad && (
+              <Button
+                variant="outlined"
+                onClick={
+                  handleClear
+                }
+              >
+                Clear Form
+              </Button>
+            )}
           </Stack>
 
+
           {submitted && (
-            <Alert severity="success" sx={{ mt: 3 }}>
-              Form submitted successfully. This action is logged for demonstration.
+            <Alert
+              severity="success"
+              sx={{ mt: 3 }}
+            >
+              Review submitted successfully.
+              Select Finish Task when you have
+              completed the research task.
             </Alert>
           )}
         </CardContent>

@@ -1,30 +1,60 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { extractFeatureVectorFromStats } from "../ml/featureExtractor";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  extractFeatureVectorFromStats,
+} from "../ml/featureExtractor";
+
 
 function createId() {
   if (window.crypto?.randomUUID) {
     return window.crypto.randomUUID();
   }
 
-  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `id-${Date.now()}-${Math.random()
+    .toString(16)
+    .slice(2)}`;
 }
+
 
 function getTargetName(target) {
   if (!(target instanceof Element)) {
     return "unknown";
   }
 
-  const tag = target.tagName.toLowerCase();
-  const text = target.innerText?.trim().replace(/\s+/g, " ").slice(0, 40);
-  const aria = target.getAttribute("aria-label");
-  const id = target.getAttribute("id");
+  const tag =
+    target.tagName.toLowerCase();
 
-  if (aria) return `${tag}:${aria}`;
-  if (id) return `${tag}#${id}`;
-  if (text) return `${tag}:${text}`;
+  const text = target.innerText
+    ?.trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 40);
+
+  const aria =
+    target.getAttribute("aria-label");
+
+  const id =
+    target.getAttribute("id");
+
+  if (aria) {
+    return `${tag}:${aria}`;
+  }
+
+  if (id) {
+    return `${tag}#${id}`;
+  }
+
+  if (text) {
+    return `${tag}:${text}`;
+  }
 
   return tag;
 }
+
 
 function createEmptyStats() {
   return {
@@ -34,7 +64,10 @@ function createEmptyStats() {
     scrollCount: 0,
     scrollDistance: 0,
     scrollDirectionChanges: 0,
-    lastScrollY: window.scrollY || 0,
+
+    lastScrollY:
+      window.scrollY || 0,
+
     lastScrollDirection: null,
 
     mouseMoveCount: 0,
@@ -46,143 +79,291 @@ function createEmptyStats() {
     navigationCount: 0,
 
     hesitations: [],
-    lastMeaningfulActionTime: Date.now(),
+
+    lastMeaningfulActionTime:
+      Date.now(),
   };
 }
+
 
 export default function useInteractionTracker({
   activePage,
   adaptiveMode,
   cognitiveLoad,
 }) {
-  const sessionIdRef = useRef(createId());
-  const startTimeRef = useRef(Date.now());
+  const sessionIdRef =
+    useRef(createId());
 
-  const activePageRef = useRef(activePage);
-  const adaptiveModeRef = useRef(adaptiveMode);
-  const cognitiveLoadRef = useRef(cognitiveLoad);
-  const previousPageRef = useRef(activePage);
+  const startTimeRef =
+    useRef(Date.now());
 
-  const eventsRef = useRef([]);
-  const snapshotsRef = useRef([]);
-  const statsRef = useRef(createEmptyStats());
+  const activePageRef =
+    useRef(activePage);
 
-  const lastClickRef = useRef({
-    targetName: null,
-    timestamp: 0,
-  });
+  const adaptiveModeRef =
+    useRef(adaptiveMode);
 
-  const lastMouseMoveHandledRef = useRef(0);
-  const lastScrollHandledRef = useRef(0);
+  const cognitiveLoadRef =
+    useRef(cognitiveLoad);
 
-  const [recentEvents, setRecentEvents] = useState([]);
-  const [metrics, setMetrics] = useState(null);
+  const previousPageRef =
+    useRef(activePage);
+
+  const eventsRef =
+    useRef([]);
+
+  const snapshotsRef =
+    useRef([]);
+
+  const statsRef =
+    useRef(createEmptyStats());
+
+  const lastClickRef =
+    useRef({
+      targetName: null,
+      timestamp: 0,
+    });
+
+  const lastMouseMoveHandledRef =
+    useRef(0);
+
+  const lastScrollHandledRef =
+    useRef(0);
+
+  const [recentEvents, setRecentEvents] =
+    useState([]);
+
+  const [metrics, setMetrics] =
+    useState(null);
+
 
   useEffect(() => {
-    activePageRef.current = activePage;
-    adaptiveModeRef.current = adaptiveMode;
-    cognitiveLoadRef.current = cognitiveLoad;
-  }, [activePage, adaptiveMode, cognitiveLoad]);
+    activePageRef.current =
+      activePage;
 
-  const recordEvent = useCallback((type, payload = {}) => {
-    const event = {
-      id: createId(),
-      sessionId: sessionIdRef.current,
-      timestamp: new Date().toISOString(),
-      page: activePageRef.current,
-      adaptiveMode: adaptiveModeRef.current,
-      cognitiveLoad: cognitiveLoadRef.current,
-      type,
-      ...payload,
-    };
+    adaptiveModeRef.current =
+      adaptiveMode;
 
-    eventsRef.current.push(event);
+    cognitiveLoadRef.current =
+      cognitiveLoad;
+  }, [
+    activePage,
+    adaptiveMode,
+    cognitiveLoad,
+  ]);
 
-    if (eventsRef.current.length > 5000) {
-      eventsRef.current = eventsRef.current.slice(-5000);
-    }
 
-    setRecentEvents((prev) => [event, ...prev].slice(0, 20));
-  }, []);
+  const recordEvent = useCallback(
+    (type, payload = {}) => {
+      const event = {
+        id: createId(),
 
-  const recordHesitation = useCallback(() => {
-    const now = Date.now();
-    const stats = statsRef.current;
+        sessionId:
+          sessionIdRef.current,
 
-    const hesitation = now - stats.lastMeaningfulActionTime;
+        timestamp:
+          new Date().toISOString(),
 
-    if (hesitation >= 800 && hesitation <= 30000) {
-      stats.hesitations.push(hesitation);
-    }
+        page:
+          activePageRef.current,
 
-    if (stats.hesitations.length > 1000) {
-      stats.hesitations = stats.hesitations.slice(-1000);
-    }
+        adaptiveMode:
+          adaptiveModeRef.current,
 
-    stats.lastMeaningfulActionTime = now;
-  }, []);
+        cognitiveLoad:
+          cognitiveLoadRef.current,
 
-  const generateMetricsSnapshot = useCallback(() => {
-    const stats = statsRef.current;
+        type,
 
-    const featureVector = extractFeatureVectorFromStats(
-      stats,
-      startTimeRef.current
+        ...payload,
+      };
+
+      eventsRef.current.push(event);
+
+      if (
+        eventsRef.current.length >
+        5000
+      ) {
+        eventsRef.current =
+          eventsRef.current.slice(-5000);
+      }
+
+      setRecentEvents((previous) => [
+        event,
+        ...previous,
+      ].slice(0, 20));
+
+      return event;
+    },
+    []
+  );
+
+
+  const recordCustomEvent =
+    useCallback(
+      (type, payload = {}) =>
+        recordEvent(type, payload),
+      [recordEvent]
     );
 
-    const snapshot = {
-      sessionId: sessionIdRef.current,
-      timestamp: new Date().toISOString(),
-      activePage: activePageRef.current,
-      adaptiveMode: adaptiveModeRef.current,
-      cognitiveLoad: cognitiveLoadRef.current,
 
-      clickCount: stats.clickCount,
-      scrollDistance: Number(stats.scrollDistance.toFixed(2)),
-      mouseMoveCount: stats.mouseMoveCount,
+  const recordHesitation =
+    useCallback(() => {
+      const now = Date.now();
 
-      ...featureVector,
+      const stats =
+        statsRef.current;
 
-      featureVector,
-    };
+      const hesitation =
+        now -
+        stats.lastMeaningfulActionTime;
 
-    snapshotsRef.current.push(snapshot);
+      if (
+        hesitation >= 800 &&
+        hesitation <= 30000
+      ) {
+        stats.hesitations.push(
+          hesitation
+        );
+      }
 
-    if (snapshotsRef.current.length > 1000) {
-      snapshotsRef.current = snapshotsRef.current.slice(-1000);
-    }
+      if (
+        stats.hesitations.length >
+        1000
+      ) {
+        stats.hesitations =
+          stats.hesitations.slice(
+            -1000
+          );
+      }
 
-    setMetrics(snapshot);
-  }, []);
+      stats.lastMeaningfulActionTime =
+        now;
+    }, []);
+
+
+  const buildSnapshot =
+    useCallback(() => {
+      const stats =
+        statsRef.current;
+
+      const featureVector =
+        extractFeatureVectorFromStats(
+          stats,
+          startTimeRef.current
+        );
+
+      return {
+        sessionId:
+          sessionIdRef.current,
+
+        timestamp:
+          new Date().toISOString(),
+
+        activePage:
+          activePageRef.current,
+
+        adaptiveMode:
+          adaptiveModeRef.current,
+
+        cognitiveLoad:
+          cognitiveLoadRef.current,
+
+        clickCount:
+          stats.clickCount,
+
+        scrollDistance:
+          Number(
+            stats.scrollDistance.toFixed(
+              2
+            )
+          ),
+
+        mouseMoveCount:
+          stats.mouseMoveCount,
+
+        ...featureVector,
+
+        featureVector,
+      };
+    }, []);
+
+
+  const captureSnapshot =
+    useCallback(() => {
+      const snapshot =
+        buildSnapshot();
+
+      snapshotsRef.current.push(
+        snapshot
+      );
+
+      if (
+        snapshotsRef.current.length >
+        1000
+      ) {
+        snapshotsRef.current =
+          snapshotsRef.current.slice(
+            -1000
+          );
+      }
+
+      setMetrics(snapshot);
+
+      return snapshot;
+    }, [buildSnapshot]);
+
 
   useEffect(() => {
-    if (previousPageRef.current !== activePage) {
-      statsRef.current.navigationCount += 1;
+    if (
+      previousPageRef.current !==
+      activePage
+    ) {
+      statsRef.current
+        .navigationCount += 1;
 
-      recordEvent("page_change", {
-        from: previousPageRef.current,
-        to: activePage,
-      });
+      recordEvent(
+        "page_change",
+        {
+          from:
+            previousPageRef.current,
+          to: activePage,
+        }
+      );
 
-      previousPageRef.current = activePage;
+      previousPageRef.current =
+        activePage;
     }
-  }, [activePage, recordEvent]);
+  }, [
+    activePage,
+    recordEvent,
+  ]);
+
 
   useEffect(() => {
     function handleClick(event) {
       recordHesitation();
 
-      const targetName = getTargetName(event.target);
+      const targetName =
+        getTargetName(event.target);
+
       const now = Date.now();
 
-      statsRef.current.clickCount += 1;
+      statsRef.current
+        .clickCount += 1;
 
-      const isRepeatedClick =
-        lastClickRef.current.targetName === targetName &&
-        now - lastClickRef.current.timestamp <= 1500;
+      const repeated =
+        lastClickRef.current
+          .targetName ===
+          targetName &&
+        now -
+          lastClickRef.current
+            .timestamp <=
+          1500;
 
-      if (isRepeatedClick) {
-        statsRef.current.repeatedClickCount += 1;
+      if (repeated) {
+        statsRef.current
+          .repeatedClickCount += 1;
       }
 
       lastClickRef.current = {
@@ -192,150 +373,294 @@ export default function useInteractionTracker({
 
       recordEvent("click", {
         targetName,
+
         x: event.clientX,
         y: event.clientY,
-        repeatedClick: isRepeatedClick,
+
+        repeatedClick:
+          repeated,
       });
     }
+
 
     function handleMouseMove(event) {
       const now = Date.now();
 
-      if (now - lastMouseMoveHandledRef.current < 100) {
+      if (
+        now -
+          lastMouseMoveHandledRef
+            .current <
+        100
+      ) {
         return;
       }
 
-      lastMouseMoveHandledRef.current = now;
+      lastMouseMoveHandledRef.current =
+        now;
 
-      const stats = statsRef.current;
+      const stats =
+        statsRef.current;
+
       const currentPosition = {
         x: event.clientX,
         y: event.clientY,
         timestamp: now,
       };
 
-      if (stats.lastMousePosition) {
-        const dx = currentPosition.x - stats.lastMousePosition.x;
-        const dy = currentPosition.y - stats.lastMousePosition.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const duration =
-          currentPosition.timestamp - stats.lastMousePosition.timestamp;
+      if (
+        stats.lastMousePosition
+      ) {
+        const dx =
+          currentPosition.x -
+          stats.lastMousePosition.x;
 
-        stats.pointerDistance += distance;
-        stats.pointerDurationMs += duration;
+        const dy =
+          currentPosition.y -
+          stats.lastMousePosition.y;
+
+        const distance =
+          Math.sqrt(
+            dx * dx + dy * dy
+          );
+
+        const duration =
+          currentPosition.timestamp -
+          stats.lastMousePosition
+            .timestamp;
+
+        stats.pointerDistance +=
+          distance;
+
+        stats.pointerDurationMs +=
+          duration;
       }
 
       stats.mouseMoveCount += 1;
-      stats.lastMousePosition = currentPosition;
+
+      stats.lastMousePosition =
+        currentPosition;
     }
+
 
     function handleScroll() {
       const now = Date.now();
 
-      if (now - lastScrollHandledRef.current < 150) {
+      if (
+        now -
+          lastScrollHandledRef
+            .current <
+        150
+      ) {
         return;
       }
 
-      lastScrollHandledRef.current = now;
+      lastScrollHandledRef.current =
+        now;
+
       recordHesitation();
 
-      const stats = statsRef.current;
-      const currentY = window.scrollY || 0;
-      const distance = Math.abs(currentY - stats.lastScrollY);
+      const stats =
+        statsRef.current;
+
+      const currentY =
+        window.scrollY || 0;
+
+      const distance =
+        Math.abs(
+          currentY -
+            stats.lastScrollY
+        );
 
       const direction =
-        currentY > stats.lastScrollY
+        currentY >
+        stats.lastScrollY
           ? "down"
-          : currentY < stats.lastScrollY
+          : currentY <
+            stats.lastScrollY
           ? "up"
           : "none";
 
       if (
         direction !== "none" &&
         stats.lastScrollDirection &&
-        direction !== stats.lastScrollDirection
+        direction !==
+          stats.lastScrollDirection
       ) {
-        stats.scrollDirectionChanges += 1;
+        stats.scrollDirectionChanges +=
+          1;
       }
 
       if (direction !== "none") {
-        stats.lastScrollDirection = direction;
+        stats.lastScrollDirection =
+          direction;
       }
 
       stats.scrollCount += 1;
-      stats.scrollDistance += distance;
-      stats.lastScrollY = currentY;
+      stats.scrollDistance +=
+        distance;
+
+      stats.lastScrollY =
+        currentY;
 
       recordEvent("scroll", {
         scrollY: currentY,
-        scrollDistance: Number(distance.toFixed(2)),
+
+        scrollDistance:
+          Number(
+            distance.toFixed(2)
+          ),
+
         direction,
       });
     }
 
+
     function handleKeyDown(event) {
       recordHesitation();
 
-      statsRef.current.keyPressCount += 1;
+      statsRef.current
+        .keyPressCount += 1;
 
-      recordEvent("keyboard_event", {
-        keyType: event.key.length === 1 ? "character" : event.key,
-      });
+      // We deliberately do NOT
+      // store actual typed characters.
+      recordEvent(
+        "keyboard_event",
+        {
+          keyType:
+            event.key.length === 1
+              ? "character"
+              : event.key,
+        }
+      );
     }
 
-    document.addEventListener("click", handleClick);
-    document.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("scroll", handleScroll);
-    document.addEventListener("keydown", handleKeyDown);
 
-    const intervalId = window.setInterval(generateMetricsSnapshot, 2000);
+    document.addEventListener(
+      "click",
+      handleClick
+    );
 
-    generateMetricsSnapshot();
+    document.addEventListener(
+      "mousemove",
+      handleMouseMove
+    );
+
+    window.addEventListener(
+      "scroll",
+      handleScroll
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    const intervalId =
+      window.setInterval(
+        captureSnapshot,
+        2000
+      );
+
+    captureSnapshot();
+
 
     return () => {
-      document.removeEventListener("click", handleClick);
-      document.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("scroll", handleScroll);
-      document.removeEventListener("keydown", handleKeyDown);
-      window.clearInterval(intervalId);
+      document.removeEventListener(
+        "click",
+        handleClick
+      );
+
+      document.removeEventListener(
+        "mousemove",
+        handleMouseMove
+      );
+
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      window.clearInterval(
+        intervalId
+      );
     };
-  }, [generateMetricsSnapshot, recordEvent, recordHesitation]);
+  }, [
+    captureSnapshot,
+    recordEvent,
+    recordHesitation,
+  ]);
 
-  const resetTracking = useCallback(() => {
-    sessionIdRef.current = createId();
-    startTimeRef.current = Date.now();
 
-    eventsRef.current = [];
-    snapshotsRef.current = [];
-    statsRef.current = createEmptyStats();
+  const resetTracking =
+    useCallback(() => {
+      const newSessionId =
+        createId();
 
-    lastClickRef.current = {
-      targetName: null,
-      timestamp: 0,
-    };
+      sessionIdRef.current =
+        newSessionId;
 
-    setRecentEvents([]);
-    setMetrics(null);
+      startTimeRef.current =
+        Date.now();
 
-    recordEvent("tracking_reset", {
-      message: "Interaction tracking session reset.",
-    });
-  }, [recordEvent]);
+      eventsRef.current = [];
+      snapshotsRef.current = [];
 
-  const getExportPayload = useCallback(() => {
-    return {
-      sessionId: sessionIdRef.current,
-      exportedAt: new Date().toISOString(),
-      currentMetrics: metrics,
-      events: eventsRef.current,
-      featureSnapshots: snapshotsRef.current,
-    };
-  }, [metrics]);
+      statsRef.current =
+        createEmptyStats();
+
+      lastClickRef.current = {
+        targetName: null,
+        timestamp: 0,
+      };
+
+      previousPageRef.current =
+        activePageRef.current;
+
+      setRecentEvents([]);
+      setMetrics(null);
+
+      recordEvent(
+        "tracking_session_started"
+      );
+
+      return newSessionId;
+    }, [recordEvent]);
+
+
+  const getExportPayload =
+    useCallback(() => ({
+      sessionId:
+        sessionIdRef.current,
+
+      exportedAt:
+        new Date().toISOString(),
+
+      currentMetrics:
+        metrics,
+
+      events:
+        [...eventsRef.current],
+
+      featureSnapshots:
+        [...snapshotsRef.current],
+    }), [metrics]);
+
 
   return {
-    sessionId: sessionIdRef.current,
+    sessionId:
+      sessionIdRef.current,
+
     metrics,
     recentEvents,
+
+    captureSnapshot,
+    recordCustomEvent,
+
     getExportPayload,
     resetTracking,
   };

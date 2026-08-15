@@ -13,12 +13,22 @@ import theme from "./theme";
 import Layout from "./components/Layout";
 
 import Dashboard from "./pages/Dashboard";
-import Evaluation from "./pages/Evaluation";
+
 import InformationSearch from "./pages/InformationSearch";
+
+import ResearchEvaluation from "./pages/ResearchEvaluation";
+
 import TaskForm from "./pages/TaskForm";
 
 import useCognitiveLoadInference from "./ml/useCognitiveLoadInference";
+
 import useInteractionTracker from "./tracking/useInteractionTracker";
+
+import useResearchEvaluation from "./research/useResearchEvaluation";
+
+import {
+  RESEARCH_CONFIG,
+} from "./research/researchConfig";
 
 import {
   createLogMessage,
@@ -26,8 +36,12 @@ import {
 
 
 function createId() {
-  if (window.crypto?.randomUUID) {
-    return window.crypto.randomUUID();
+  if (
+    window.crypto?.randomUUID
+  ) {
+    return (
+      window.crypto.randomUUID()
+    );
   }
 
   return `log-${Date.now()}-${Math.random()
@@ -37,82 +51,156 @@ function createId() {
 
 
 export default function App() {
-  const [activePage, setActivePage] =
-    useState("dashboard");
+  const [
+    activePage,
+    setActivePage,
+  ] = useState("dashboard");
+
 
   const [
     adaptiveMode,
     setAdaptiveMode,
   ] = useState(true);
 
+
   const [
     controlMode,
     setControlMode,
-  ] = useState("automatic");
+  ] = useState(
+    "automatic"
+  );
+
 
   const [
     manualLoad,
     setManualLoad,
   ] = useState("medium");
 
+
   const [
     cognitiveLoad,
     setCognitiveLoad,
   ] = useState("medium");
 
-  const [logs, setLogs] = useState([]);
 
-  const tracker = useInteractionTracker({
-    activePage,
-    adaptiveMode,
-    cognitiveLoad,
-  });
+  const [
+    logs,
+    setLogs,
+  ] = useState([]);
+
+
+  const tracker =
+    useInteractionTracker({
+      activePage,
+      adaptiveMode,
+      cognitiveLoad,
+    });
+
 
   const inference =
     useCognitiveLoadInference({
-      sessionId: tracker.sessionId,
+      sessionId:
+        tracker.sessionId,
+
       featureVector:
-        tracker.metrics?.featureVector ||
+        tracker.metrics
+          ?.featureVector ||
         null,
 
       enabled:
-        controlMode === "automatic",
+        controlMode ===
+        "automatic",
 
-      predictionIntervalMs: 5000,
-      minimumDurationSec: 15,
-      confidenceThreshold: 0.6,
-      requiredConsecutivePredictions: 2,
+      predictionIntervalMs:
+        RESEARCH_CONFIG
+          .inference
+          .predictionIntervalMs,
+
+      minimumDurationSec:
+        RESEARCH_CONFIG
+          .inference
+          .minimumDurationSec,
+
+      confidenceThreshold:
+        RESEARCH_CONFIG
+          .inference
+          .confidenceThreshold,
+
+      requiredConsecutivePredictions:
+        RESEARCH_CONFIG
+          .inference
+          .requiredConsecutivePredictions,
     });
+
 
   const addLog = (
     message,
     {
-      load = cognitiveLoad,
-      page = activePage,
+      load =
+        cognitiveLoad,
+
+      page =
+        activePage,
     } = {}
   ) => {
-    const time =
-      new Date().toLocaleTimeString();
+    const now =
+      new Date();
 
-    setLogs((previous) => [
-      {
-        id: createId(),
-        time,
-        load,
-        page,
-        message,
-      },
-      ...previous.slice(0, 19),
-    ]);
+    setLogs(
+      (previous) => [
+        {
+          id:
+            createId(),
+
+          timestamp:
+            now.toISOString(),
+
+          time:
+            now.toLocaleTimeString(),
+
+          load,
+          page,
+          message,
+        },
+
+        ...previous.slice(
+          0,
+          99
+        ),
+      ]
+    );
   };
 
+
+  const research =
+    useResearchEvaluation({
+      tracker,
+      inference,
+
+      logs,
+
+      setActivePage,
+
+      setAdaptiveMode,
+      setControlMode,
+    });
+
+
   useEffect(() => {
-    if (controlMode === "manual") {
-      setCognitiveLoad(manualLoad);
+    if (
+      controlMode ===
+      "manual"
+    ) {
+      setCognitiveLoad(
+        manualLoad
+      );
+
       return;
     }
 
-    if (inference.stableLoad) {
+    if (
+      inference.stableLoad
+    ) {
       setCognitiveLoad(
         inference.stableLoad
       );
@@ -123,6 +211,7 @@ export default function App() {
     inference.stableLoad,
   ]);
 
+
   useEffect(() => {
     addLog(
       createLogMessage(
@@ -132,8 +221,6 @@ export default function App() {
       )
     );
 
-    // This effect should run only when
-    // one of these UI states changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activePage,
@@ -141,9 +228,11 @@ export default function App() {
     cognitiveLoad,
   ]);
 
+
   useEffect(() => {
     if (
-      controlMode !== "automatic" ||
+      controlMode !==
+        "automatic" ||
       !inference.lastUpdated ||
       !inference.rawPrediction
     ) {
@@ -151,28 +240,42 @@ export default function App() {
     }
 
     const prediction =
-      inference.rawPrediction;
+      inference
+        .rawPrediction;
 
     addLog(
       `ML predicted ${prediction.predictedLoad.toUpperCase()} load with ${Math.round(
-        prediction.confidence * 100
+        prediction.confidence *
+          100
       )}% confidence.`,
+
       {
         load:
-          prediction.predictedLoad,
+          prediction
+            .predictedLoad,
       }
     );
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inference.lastUpdated]);
+  }, [
+    inference.lastUpdated,
+  ]);
+
 
   const commonProps = {
-    adaptiveMode,
-    cognitiveLoad,
-    addLog,
-  };
+  adaptiveMode,
+  cognitiveLoad,
+  addLog,
 
-  const renderPage = () => {
+  researchMode:
+    research.phase === "running",
+
+  recordInteractionEvent:
+    tracker.recordCustomEvent,
+};  
+
+
+  function renderPage() {
     switch (activePage) {
       case "dashboard":
         return (
@@ -195,10 +298,12 @@ export default function App() {
           />
         );
 
-      case "evaluation":
+      case "research":
         return (
-          <Evaluation
-            {...commonProps}
+          <ResearchEvaluation
+            research={
+              research
+            }
           />
         );
 
@@ -209,32 +314,65 @@ export default function App() {
           />
         );
     }
-  };
+  }
+
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider
+      theme={theme}
+    >
       <CssBaseline />
 
       <Layout
-        activePage={activePage}
-        setActivePage={setActivePage}
+        activePage={
+          activePage
+        }
 
-        adaptiveMode={adaptiveMode}
+        setActivePage={
+          setActivePage
+        }
+
+        adaptiveMode={
+          adaptiveMode
+        }
+
         setAdaptiveMode={
           setAdaptiveMode
         }
 
-        controlMode={controlMode}
-        setControlMode={setControlMode}
+        controlMode={
+          controlMode
+        }
 
-        manualLoad={manualLoad}
-        setManualLoad={setManualLoad}
+        setControlMode={
+          setControlMode
+        }
 
-        cognitiveLoad={cognitiveLoad}
+        manualLoad={
+          manualLoad
+        }
+
+        setManualLoad={
+          setManualLoad
+        }
+
+        cognitiveLoad={
+          cognitiveLoad
+        }
 
         logs={logs}
-        tracker={tracker}
-        inference={inference}
+
+        tracker={
+          tracker
+        }
+
+        inference={
+          inference
+        }
+
+        research={
+          research
+        }
       >
         {renderPage()}
       </Layout>

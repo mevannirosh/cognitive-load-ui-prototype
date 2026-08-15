@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -88,3 +88,51 @@ class ModelInfoResponse(BaseModel):
     featureColumns: list[str]
     labels: list[str]
     loadedAt: str
+
+
+
+class ResearchTrialRecord(
+    BaseModel
+):
+    model_config = ConfigDict(
+        extra="allow"
+    )
+
+    trialId: str = Field(
+        min_length=1,
+        max_length=200,
+        pattern=r"^[A-Za-z0-9_-]+$",
+    )
+
+    participantId: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    taskId: str = Field(
+        min_length=1,
+        max_length=50,
+    )
+
+    condition: Literal[
+        "adaptive",
+        "non_adaptive",
+    ]
+
+    status: Literal[
+        "completed"
+    ]
+
+
+class ResearchTrialSaveResponse(
+    BaseModel
+):
+    success: bool
+    trialId: str
+    savedAt: str
+
+
+class ResearchTrialCountResponse(
+    BaseModel
+):
+    count: int

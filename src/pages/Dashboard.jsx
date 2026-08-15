@@ -30,7 +30,12 @@ import {
 import MetricCard from "../components/MetricCard";
 import { chartData, dashboardMetrics, dashboardRows } from "../data/demoData";
 
-export default function Dashboard({ adaptiveMode, cognitiveLoad, addLog }) {
+export default function Dashboard({
+  adaptiveMode,
+  cognitiveLoad,
+  addLog,
+  researchMode = false,
+}) {
   const highLoad = adaptiveMode && cognitiveLoad === "high";
   const mediumLoad = adaptiveMode && cognitiveLoad === "medium";
   const lowLoad = adaptiveMode && cognitiveLoad === "low";
@@ -57,19 +62,19 @@ export default function Dashboard({ adaptiveMode, cognitiveLoad, addLog }) {
         Demonstrates how the dashboard changes based on cognitive load.
       </Typography>
 
-      {highLoad && (
+      {!researchMode && highLoad && (
         <Alert severity="info" sx={{ mb: 3 }}>
           High load adaptation applied: secondary metrics, advanced filters, and non-critical rows are hidden.
         </Alert>
       )}
 
-      {mediumLoad && (
+      {!researchMode && mediumLoad && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           Medium load adaptation applied: high priority areas are highlighted.
         </Alert>
       )}
 
-      {lowLoad && (
+      {!researchMode && lowLoad && (
         <Alert severity="success" sx={{ mb: 3 }}>
           Low load adaptation applied: full dashboard and advanced analytics are visible.
         </Alert>
